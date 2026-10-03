@@ -325,6 +325,14 @@ func (s *paymentService) ProcessWebhook(ctx context.Context, gatewayID string, b
 			return fmt.Errorf("reference %s: %w", gwPayload.ReferenceNumber, ErrTransactionNotFound)
 		}
 
+		// A webhook is authoritative only for the gateway that created the
+		// transaction. Treat a reference owned by another gateway as unknown so
+		// we neither disclose cross-gateway ownership nor mutate the row.
+		if tx.GatewayID != gatewayID {
+			return fmt.Errorf("gateway mismatch for transaction %s: expected %s, got %s: %w",
+				tx.ReferenceNumber, tx.GatewayID, gatewayID, ErrTransactionNotFound)
+		}
+
 		// Idempotency: a terminal status is already recorded (possibly by a
 		// concurrent delivery that committed first) — nothing more to do.
 		if tx.Status == PaymentStatusSuccess || tx.Status == PaymentStatusFailed {
