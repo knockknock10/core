@@ -59,6 +59,33 @@ err := manager.Call(ctx, "npqs-api", remote.Request{
 }
 ```
 
+## Service-level headers
+
+A service can declare headers that belong to every request made through that service. Header values use `secret.SecretRef`, so secrets can be supplied directly, through an environment variable, or from a file:
+
+```json
+{
+  "id": "npqs-api",
+  "url": "https://npqs.example.gov/api",
+  "headers": {
+    "X-Api-Version": "2026-01-01",
+    "X-Api-Key": "env:NPQS_API_KEY"
+  },
+  "auth": {
+    "type": "oauth2",
+    "options": {
+      "token_url": "https://idp.example.gov/token",
+      "client_id": "my-client",
+      "client_secret": "env:NPQS_CLIENT_SECRET"
+    }
+  }
+}
+```
+
+Service headers are applied before authentication. An `Authorization` header cannot be declared alongside bearer/OAuth2 authentication, and the configured header for `api_key` authentication is likewise reserved. This prevents service configuration from silently overriding credentials.
+
+Per-request `Request.Headers` are applied after service defaults, so a caller can override a non-authentication service header for one request.
+
 ## Authentication strategies
 
 See [`remote/auth`](auth/README.md) for the full reference. Supported types:
