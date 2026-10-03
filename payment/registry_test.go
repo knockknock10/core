@@ -83,7 +83,7 @@ func TestNewRegistry(t *testing.T) {
 		"version": "1.0",
 		"methods": [
 			{
-				"id": "lankapay",
+				"id": "gw2",
 				"is_active": true,
 				"render_info": {
 					"display_name": "LankaPay",
@@ -104,7 +104,7 @@ func TestNewRegistry(t *testing.T) {
 
 	var gotConfig json.RawMessage
 	factories := map[string]Factory{
-		"lankapay": func(cfg json.RawMessage) (PaymentGateway, error) {
+		"gw2": func(cfg json.RawMessage) (PaymentGateway, error) {
 			gotConfig = cfg
 			return mockG, nil
 		},
