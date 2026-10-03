@@ -161,7 +161,7 @@ jobs:
         image: postgres:16-alpine
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_PASSWORD: 'p@ss:w/rd#?'
           POSTGRES_DB: database_test
         ports:
           - 5432:5432
@@ -173,14 +173,14 @@ jobs:
       mysql:
         image: mysql:8.4
         env:
-          MYSQL_ROOT_PASSWORD: root
+          MYSQL_ROOT_PASSWORD: 'p@ss:w/rd#?'
           MYSQL_DATABASE: database_test
           MYSQL_USER: test
-          MYSQL_PASSWORD: test
+          MYSQL_PASSWORD: 'p@ss:w/rd#?'
         ports:
           - 3306:3306
         options: >-
-          --health-cmd "mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -uroot -p$MYSQL_ROOT_PASSWORD"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 10
@@ -214,12 +214,12 @@ jobs:
           DATABASE_TEST_POSTGRES_HOST: 127.0.0.1
           DATABASE_TEST_POSTGRES_PORT: 5432
           DATABASE_TEST_POSTGRES_USER: postgres
-          DATABASE_TEST_POSTGRES_PASSWORD: postgres
+          DATABASE_TEST_POSTGRES_PASSWORD: 'p@ss:w/rd#?'
           DATABASE_TEST_POSTGRES_NAME: database_test
           DATABASE_TEST_MYSQL_HOST: 127.0.0.1
           DATABASE_TEST_MYSQL_PORT: 3306
           DATABASE_TEST_MYSQL_USER: test
-          DATABASE_TEST_MYSQL_PASSWORD: test
+          DATABASE_TEST_MYSQL_PASSWORD: 'p@ss:w/rd#?'
           DATABASE_TEST_MYSQL_NAME: database_test
         run: go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
 
