@@ -144,6 +144,16 @@ func TestPostgresConfig_DSN(t *testing.T) {
 			cfg:  PostgresConfig{Host: "db.example.com", User: "admin", Password: "pass", Name: "production", SSLMode: "disable"},
 			want: "postgres://admin:pass@db.example.com/production?sslmode=disable",
 		},
+		{
+			name: "IPv6 host with port is bracketed",
+			cfg:  PostgresConfig{Host: "::1", Port: 5432, User: "user", Password: "secret", Name: "mydb", SSLMode: "disable"},
+			want: "postgres://user:secret@[::1]:5432/mydb?sslmode=disable",
+		},
+		{
+			name: "bracketed IPv6 host with port is preserved",
+			cfg:  PostgresConfig{Host: "[::1]", Port: 5432, User: "user", Password: "secret", Name: "mydb", SSLMode: "disable"},
+			want: "postgres://user:secret@[::1]:5432/mydb?sslmode=disable",
+		},
 	}
 
 	for _, tt := range tests {
