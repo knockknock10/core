@@ -5,7 +5,7 @@ package database
 
 import (
 	"database/sql"
-	"fmt"
+	"fmt"\n\t"net"\n\t"strconv"
 	"net"
 	"net/url"
 	"strconv"
@@ -142,7 +142,7 @@ func (c PostgresConfig) DSN() string {
 	// format: postgres://user:password@host:port/dbname?sslmode=disable
 	host := c.Host
 	if c.Port != 0 {
-		host = fmt.Sprintf("%s:%d", c.Host, c.Port)
+		host = net.JoinHostPort(c.Host, strconv.Itoa(c.Port))
 	}
 	path := c.Name
 	if path != "" && path[0] != '/' {
