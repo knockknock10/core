@@ -6,7 +6,9 @@ package authn
 import (
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
+	"time"
 )
 
 func TestNewManager_AllowsNilUserProfileService(t *testing.T) {
@@ -81,6 +83,91 @@ func TestNewManager_InsecureSkipTLSVerify(t *testing.T) {
 	}
 	if transport.TLSClientConfig == nil || !transport.TLSClientConfig.InsecureSkipVerify {
 		t.Fatalf("expected InsecureSkipVerify to be true")
+	}
+}
+
+func TestNewManager_InsecureSkipTLSVerify_PreservesDefaultTransport(t *testing.T) {
+	original := http.DefaultTransport
+	defer func() {
+		http.DefaultTransport = original
+	}()
+
+	proxyURL, err := url.Parse("http://proxy.example.test:8080")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defaultTransport := &http.Transport{
+		Proxy:                 func(*url.URL) (*url.URL, error) { return proxyURL, nil },
+		MaxIdleConns:          37,
+		MaxIdleConnsPerHost:   11,
+		IdleConnTimeout:       23 * time.Second,
+		TLSHandshakeTimeout:   7 * time.Second,
+		ResponseHeaderTimeout: 13 * time.Second,
+		ExpectContinueTimeout: 3 * time.Second,
+		ForceAttemptHTTP2:     true,
+	}
+	http.DefaultTransport = defaultTransport
+
+	cfg := Config{
+		JWKSURL:               "https://localhost/jwks",
+		Issuer:                "https://localhost/token",
+		Audience:              "TRADER_PORTAL_APP",
+		ClientIDs:             []string{"TRADER_PORTAL_APP"},
+		InsecureSkipTLSVerify: true,
+	}
+
+	manager, err := NewManager(nil, cfg)
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+
+	transport, ok := manager.tokenExtractor.httpClient.Transport.(*http.Transport)
+	if !ok || transport == nil {
+		t.Fatalf("expected *http.Transport, got %T", manager.tokenExtractor.httpClient.Transport)
+	}
+	if transport == defaultTransport {
+		t.Fatal("expected a cloned transport, not http.DefaultTransport itself")
+	}
+	if transport.TLSClientConfig == nil || !transport.TLSClientConfig.InsecureSkipVerify {
+		t.Fatal("expected cloned transport to enable InsecureSkipVerify")
+	}
+	if defaultTransport.TLSClientConfig != nil {
+		t.Fatal("expected http.DefaultTransport to remain unmodified")
+	}
+
+	for name, check := range map[string]func() bool{
+		"MaxIdleConns": func() bool { return transport.MaxIdleConns == defaultTransport.MaxIdleConns },
+		"MaxIdleConnsPerHost": func() bool {
+			return transport.MaxIdleConnsPerHost == defaultTransport.MaxIdleConnsPerHost
+		},
+		"IdleConnTimeout": func() bool { return transport.IdleConnTimeout == defaultTransport.IdleConnTimeout },
+		"TLSHandshakeTimeout": func() bool {
+			return transport.TLSHandshakeTimeout == defaultTransport.TLSHandshakeTimeout
+		},
+		"ResponseHeaderTimeout": func() bool {
+			return transport.ResponseHeaderTimeout == defaultTransport.ResponseHeaderTimeout
+		},
+		"ExpectContinueTimeout": func() bool {
+			return transport.ExpectContinueTimeout == defaultTransport.ExpectContinueTimeout
+		},
+		"ForceAttemptHTTP2": func() bool { return transport.ForceAttemptHTTP2 == defaultTransport.ForceAttemptHTTP2 },
+	} {
+		if !check() {
+			t.Errorf("%s was not preserved by Clone", name)
+		}
+	}
+
+	requestURL, err := url.Parse("https://idp.example.test/.well-known/jwks.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	gotProxy, err := transport.Proxy(requestURL)
+	if err != nil {
+		t.Fatalf("cloned transport proxy failed: %v", err)
+	}
+	if !gotProxy.IsAbs() || gotProxy.Scheme != proxyURL.Scheme || gotProxy.Host != proxyURL.Host {
+		t.Fatalf("cloned transport proxy = %v, want %v", gotProxy, proxyURL)
 	}
 }
 
