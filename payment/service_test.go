@@ -437,6 +437,31 @@ func TestProcessWebhook_SuccessAdvancesTask(t *testing.T) {
 	assert.Equal(t, "LKR", tc.calls[0].payload["currency"])
 }
 
+func TestProcessWebhook_GatewayMismatch_DoesNotMutateTransaction(t *testing.T) {
+	repo := newMockRepo()
+	repo.txs["TNSW1"] = pendingTx()
+	before := *repo.txs["TNSW1"]
+
+	gw := webhookGateway(&WebhookPayload{
+		ReferenceNumber:      "TNSW1",
+		Status:               WebhookStatusSuccess,
+		Amount:               decimal.RequireFromString("1500.00"),
+		Currency:             "LKR",
+		GatewayTransactionID: "gw-tx-cross-gateway",
+	})
+	tc := &mockTaskCompleter{}
+	svc := NewPaymentService(repo, &mockRegistry{gw: gw})
+	svc.SetTaskCompleter(tc)
+
+	_, err := svc.ProcessWebhook(context.Background(), "lankapay", []byte(`{}`), nil)
+	require.ErrorIs(t, err, ErrTransactionNotFound)
+	assert.Contains(t, err.Error(), "gateway mismatch")
+	assert.Equal(t, before.GatewayID, repo.txs["TNSW1"].GatewayID)
+	assert.Equal(t, before.Status, repo.txs["TNSW1"].Status)
+	assert.Equal(t, 0, repo.updateCount)
+	assert.Empty(t, tc.calls)
+}
+
 func TestProcessWebhook_AmountMismatch(t *testing.T) {
 	repo := newMockRepo()
 	repo.txs["TNSW1"] = pendingTx()
