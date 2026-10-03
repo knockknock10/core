@@ -6,6 +6,7 @@ package remote
 import (
 	"crypto/tls"
 	"fmt"
+	"maps"
 	"net/http"
 	"time"
 
@@ -23,6 +24,20 @@ func WithTimeout(timeout time.Duration) Option {
 func WithAuthenticator(a auth.Authenticator) Option {
 	return func(c *Client) {
 		c.authenticator = a
+	}
+}
+
+// WithHeaders sets service-level headers applied to every outbound request.
+// The map is copied so later mutations by the caller cannot race with requests.
+// Per-request headers are applied afterwards and therefore override service
+// defaults using the normal http.Header case-insensitive semantics.
+func WithHeaders(headers map[string]string) Option {
+	return func(c *Client) {
+		if len(headers) == 0 {
+			c.headers = nil
+			return
+		}
+		c.headers = maps.Clone(headers)
 	}
 }
 
