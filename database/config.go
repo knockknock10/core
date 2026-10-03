@@ -5,7 +5,7 @@ package database
 
 import (
 	"database/sql"
-	"fmt"\n\t"net"\n\t"strconv"
+	"fmt"
 	"net"
 	"net/url"
 	"strconv"
