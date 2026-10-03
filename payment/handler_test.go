@@ -43,7 +43,7 @@ func serveWebhook(svc PaymentService) *httptest.ResponseRecorder {
 	h := NewHTTPHandler(svc)
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/v1/payments/{gatewayId}/webhook", h.HandleWebhook)
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/payments/govpay/webhook", http.NoBody)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/payments/gw1/webhook", http.NoBody)
 	rr := httptest.NewRecorder()
 	mux.ServeHTTP(rr, req)
 	return rr
@@ -81,7 +81,7 @@ func TestHandleValidateReference_WritesGatewayResponse(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/v1/payments/{gatewayId}/validate", h.HandleValidateReference)
 
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/payments/govpay/validate", http.NoBody)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/payments/gw1/validate", http.NoBody)
 	rr := httptest.NewRecorder()
 	mux.ServeHTTP(rr, req)
 
@@ -96,7 +96,7 @@ func TestHandleValidateReference_ServiceErrorIs500(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/v1/payments/{gatewayId}/validate", h.HandleValidateReference)
 
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/payments/govpay/validate", http.NoBody)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/payments/gw1/validate", http.NoBody)
 	rr := httptest.NewRecorder()
 	mux.ServeHTTP(rr, req)
 
@@ -109,7 +109,7 @@ func TestHandleValidateReference_VerificationFailureIs401(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/v1/payments/{gatewayId}/validate", h.HandleValidateReference)
 
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/payments/govpay/validate", http.NoBody)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/payments/gw1/validate", http.NoBody)
 	rr := httptest.NewRecorder()
 	mux.ServeHTTP(rr, req)
 
