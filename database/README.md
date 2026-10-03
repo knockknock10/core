@@ -187,3 +187,50 @@ Unit tests cover validation and connection strings for every driver, and exercis
 ```bash
 cd database && go test ./...
 ```
+
+### PostgreSQL and MySQL integration tests
+
+The integration tests exercise `New`, pool configuration, `HealthCheck`, and a real `SELECT 1` against PostgreSQL and MySQL. They are skipped unless their corresponding host variable is set, so normal unit-test runs remain self-contained.
+
+Start local containers:
+
+```bash
+docker run --rm --name open-nsw-postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=database_test \
+  -p 5432:5432 \
+  postgres:16-alpine
+
+docker run --rm --name open-nsw-mysql \
+  -e MYSQL_ROOT_PASSWORD=root \
+  -e MYSQL_DATABASE=database_test \
+  -e MYSQL_USER=test \
+  -e MYSQL_PASSWORD=test \
+  -p 3306:3306 \
+  mysql:8.4
+```
+
+Set the integration-test connection variables in another shell:
+
+```bash
+export DATABASE_TEST_POSTGRES_HOST=127.0.0.1
+export DATABASE_TEST_POSTGRES_PORT=5432
+export DATABASE_TEST_POSTGRES_USER=postgres
+export DATABASE_TEST_POSTGRES_PASSWORD=postgres
+export DATABASE_TEST_POSTGRES_NAME=database_test
+
+export DATABASE_TEST_MYSQL_HOST=127.0.0.1
+export DATABASE_TEST_MYSQL_PORT=3306
+export DATABASE_TEST_MYSQL_USER=test
+export DATABASE_TEST_MYSQL_PASSWORD=test
+export DATABASE_TEST_MYSQL_NAME=database_test
+```
+
+Then run:
+
+```bash
+cd database
+go test -v -race ./...
+```
+
+The CI database-module job starts equivalent PostgreSQL 16 and MySQL 8.4 services and exports the same variables before running the module tests.
