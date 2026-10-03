@@ -182,7 +182,7 @@ func readyzHandler(db *sql.DB) http.HandlerFunc {
 
 ## Testing
 
-Unit tests cover validation and connection strings for every driver, and exercise `New` and `HealthCheck` against an in-memory SQLite database, so no running server is needed. Run them from the module directory:
+Unit tests cover validation, driver-native PostgreSQL/MySQL DSN parsing, and connection strings for every driver, and exercise `New` and `HealthCheck` against an in-memory SQLite database, so no running server is needed. Run them from the module directory:
 
 ```bash
 cd database && go test ./...
@@ -196,16 +196,16 @@ Start local containers:
 
 ```bash
 docker run --rm --name open-nsw-postgres \
-  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_PASSWORD='p@ss:w/rd#?' \
   -e POSTGRES_DB=database_test \
   -p 5432:5432 \
   postgres:16-alpine
 
 docker run --rm --name open-nsw-mysql \
-  -e MYSQL_ROOT_PASSWORD=root \
+  -e MYSQL_ROOT_PASSWORD='p@ss:w/rd#?' \
   -e MYSQL_DATABASE=database_test \
   -e MYSQL_USER=test \
-  -e MYSQL_PASSWORD=test \
+  -e MYSQL_PASSWORD='p@ss:w/rd#?' \
   -p 3306:3306 \
   mysql:8.4
 ```
@@ -216,13 +216,13 @@ Set the integration-test connection variables in another shell:
 export DATABASE_TEST_POSTGRES_HOST=127.0.0.1
 export DATABASE_TEST_POSTGRES_PORT=5432
 export DATABASE_TEST_POSTGRES_USER=postgres
-export DATABASE_TEST_POSTGRES_PASSWORD=postgres
+export DATABASE_TEST_POSTGRES_PASSWORD='p@ss:w/rd#?'
 export DATABASE_TEST_POSTGRES_NAME=database_test
 
 export DATABASE_TEST_MYSQL_HOST=127.0.0.1
 export DATABASE_TEST_MYSQL_PORT=3306
 export DATABASE_TEST_MYSQL_USER=test
-export DATABASE_TEST_MYSQL_PASSWORD=test
+export DATABASE_TEST_MYSQL_PASSWORD='p@ss:w/rd#?'
 export DATABASE_TEST_MYSQL_NAME=database_test
 ```
 
