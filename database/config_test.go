@@ -4,7 +4,7 @@
 package database
 
 import (
-	"testing"
+	"testing"\n\n\t"github.com/go-sql-driver/mysql"\n\t"github.com/jackc/pgx/v5"
 )
 
 func TestConfig_Validate(t *testing.T) {
@@ -187,6 +187,102 @@ func TestMySQLConfig_DSN(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.cfg.DSN(); got != tt.want {
 				t.Errorf("\ngot:  %s\nwant: %s", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestPostgresConfig_DSN_ParsesWithPgx(t *testing.T) {
+	tests := []struct {
+		name     string
+		cfg      PostgresConfig
+		wantHost string
+		wantPort uint16
+	}{
+		{
+			name:     "ipv4 host",
+			cfg:      PostgresConfig{Host: "localhost", Port: 5432, User: "user", Password: "p@ss:w/rd#?", Name: "mydb", SSLMode: "disable"},
+			wantHost: "localhost",
+			wantPort: 5432,
+		},
+		{
+			name:     "ipv6 host",
+			cfg:      PostgresConfig{Host: "::1", Port: 5432, User: "user", Password: "p@ss:w/rd#?", Name: "mydb", SSLMode: "disable"},
+			wantHost: "::1",
+			wantPort: 5432,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg, err := pgx.ParseConfig(tt.cfg.DSN())
+			if err != nil {
+				t.Fatalf("pgx.ParseConfig() error = %v", err)
+			}
+			if cfg.Host != tt.wantHost {
+				t.Errorf("host = %q, want %q", cfg.Host, tt.wantHost)
+			}
+			if cfg.Port != tt.wantPort {
+				t.Errorf("port = %d, want %d", cfg.Port, tt.wantPort)
+			}
+			if cfg.User != tt.cfg.User {
+				t.Errorf("user = %q, want %q", cfg.User, tt.cfg.User)
+			}
+			if cfg.Password != tt.cfg.Password {
+				t.Errorf("password = %q, want %q", cfg.Password, tt.cfg.Password)
+			}
+			if cfg.Database != tt.cfg.Name {
+				t.Errorf("database = %q, want %q", cfg.Database, tt.cfg.Name)
+			}
+			if cfg.RuntimeParams["sslmode"] != tt.cfg.SSLMode {
+				t.Errorf("sslmode = %q, want %q", cfg.RuntimeParams["sslmode"], tt.cfg.SSLMode)
+			}
+		})
+	}
+}
+
+func TestMySQLConfig_DSN_ParsesWithDriver(t *testing.T) {
+	tests := []struct {
+		name     string
+		cfg      MySQLConfig
+		wantHost string
+		wantPort int
+	}{
+		{
+			name:     "ipv4 host",
+			cfg:      MySQLConfig{Host: "localhost", Port: 3306, User: "user", Password: "p@ss:w/rd#?", Name: "mydb"},
+			wantHost: "localhost",
+			wantPort: 3306,
+		},
+		{
+			name:     "ipv6 host",
+			cfg:      MySQLConfig{Host: "::1", Port: 3306, User: "user", Password: "p@ss:w/rd#?", Name: "mydb"},
+			wantHost: "::1",
+			wantPort: 3306,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg, err := mysql.ParseDSN(tt.cfg.DSN())
+			if err != nil {
+				t.Fatalf("mysql.ParseDSN() error = %v", err)
+			}
+			wantAddr := net.JoinHostPort(tt.wantHost, strconv.Itoa(tt.wantPort))
+			if cfg.Addr != wantAddr {
+				t.Errorf("addr = %q, want %q", cfg.Addr, wantAddr)
+			}
+			if cfg.User != tt.cfg.User {
+				t.Errorf("user = %q, want %q", cfg.User, tt.cfg.User)
+			}
+			if cfg.Passwd != tt.cfg.Password {
+				t.Errorf("password = %q, want %q", cfg.Passwd, tt.cfg.Password)
+			}
+			if cfg.DBName != tt.cfg.Name {
+				t.Errorf("database = %q, want %q", cfg.DBName, tt.cfg.Name)
+			}
+			if !cfg.ParseTime {
+				t.Error("parseTime = false, want true")
 			}
 		})
 	}
